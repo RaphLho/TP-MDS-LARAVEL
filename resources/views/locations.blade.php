@@ -59,6 +59,25 @@
         .toggle-checkbox:not(:checked)+.toggle-label {
             background-color: #F56565;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: rgb(224, 224, 224);
+            margin: 15% auto;
+            padding: 20px;
+            width: 50%;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
@@ -106,9 +125,47 @@
         </div>
     </nav>
 
+    <!-- Modal pour ajouter une box -->
+    <div id="addBoxModal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Ajouter une nouvelle box</h2>
+            <form id="addBoxForm" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nom</label>
+                    <input type="text" name="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Adresse</label>
+                    <input type="text" name="address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Prix</label>
+                    <input type="number" name="price" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded-md">Annuler</button>
+                    <button type="submit" onclick="event.preventDefault(); submitForm();" class="px-4 py-2 bg-blue-600 text-white rounded-md">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <main class="flex-grow">
         <div class="max-w-7xl mx-auto py-12 sm:px-6 lg:px-8">
             <div class="px-4 py-6 sm:px-0">
+                <div class="flex justify-end mb-6">
+                    <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Ajouter une box
+                    </button>
+                </div>
                 <h2
                     class="text-3xl font-extrabold text-center mb-8 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 animate-bounce-slow">
                     Gestion de locations de box
@@ -117,7 +174,7 @@
                     @foreach ($boxes as $box)
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg float-animation"
                             x-data="{
-                                status: {{ $box->status }},
+                                status: {{ $box->status ? 1 : 0 }},
                                 async toggleStatus() {
                                     try {
                                         const response = await fetch('/web/boxes/{{ $box->id }}/toggle-status', {
@@ -160,69 +217,178 @@
                                         class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                                         <input type="checkbox" name="toggle" id="toggle-{{ $box->id }}"
                                             class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                                            :checked="status === 0" @click="toggleStatus">
+                                            :checked="status === 1" @click="toggleStatus">
                                         <label for="toggle-{{ $box->id }}"
-                                            class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
+                                            class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer bg-gray-300 dark:bg-gray-600"
+                                            :class="{ 'bg-green-500': status === 1, 'bg-gray-300': status === 0 }"></label>
                                     </div>
                                     <span x-text="status === 0 ? 'Disponible' : 'Loué'"
                                         :class="{ 'text-green-600': status === 0, 'text-red-600': status === 1 }">
                                     </span>
                                 </div>
-                                <a href="#"
-                                    class="text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 ease-in-out hover:text-blue-800 dark:hover:text-blue-200">
-                                    Réserver
-                                </a>
+                                <button @click="deleteBox({{ $box->id }})"
+                                    class="text-red-600 dark:text-red-400 hover:underline transition-all duration-300 ease-in-out hover:text-red-800 dark:hover:text-red-200 cursor-pointer">
+                                    Supprimer
+                                </button>
+                                <button onclick="openEditModal({{ $box->id }})"
+                                    class="m-8 text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 ease-in-out hover:text-blue-800 dark:hover:text-blue-200 cursor-pointer">
+                                    Modifier
+                                </button>
+
+                                <!-- Edit Box Modal -->
+                                <div id="editBoxModal-{{ $box->id }}" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden overflow-y-auto">
+                                    <div class="flex items-center justify-center min-h-screen p-4">
+                                        <div class="bg-white dark:bg-gray-800 rounded-lg p-8 w-full max-h-screen overflow-y-auto mx-4">
+                                            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Modifier la box</h2>
+                                            <form id="editBoxForm-{{ $box->id }}" class="space-y-4">
+                                                <div>
+                                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">Nom</label>
+                                                    <input type="text" name="name" value="{{ $box->name }}" 
+                                                        class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                                                    <textarea name="description" 
+                                                        class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">{{ $box->description }}</textarea>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">Adresse</label>
+                                                    <input type="text" name="address" value="{{ $box->address }}"
+                                                        class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-gray-700 dark:text-gray-300 mb-2">Prix</label>
+                                                    <input type="number" name="price" value="{{ $box->price }}"
+                                                        class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                </div>
+                                                <div class="flex justify-end space-x-4">
+                                                    <button type="button" onclick="closeEditModal({{ $box->id }})"
+                                                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                                                        Annuler
+                                                    </button>
+                                                    <button type="button" onclick="submitEditForm({{ $box->id }})"
+                                                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                                        Sauvegarder
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @endforeach
+                </div>
+
+                <div class="mt-8">
+                    {{ $boxes->links() }}
                 </div>
             </div>
         </div>
     </main>
 
-
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({
-            alpha: true
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('background-animation').appendChild(renderer.domElement);
+        // Remove or comment out the Three.js code
+        // const scene = new THREE.Scene();
+        // ...
 
-        const geometry = new THREE.SphereGeometry(1, 32, 32);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x0000ff,
-            wireframe: true
-        });
-        const sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
-
-        camera.position.z = 5;
-
-        function onMouseMove(event) {
-            const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-            const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            sphere.rotation.x = mouseY * Math.PI;
-            sphere.rotation.y = mouseX * Math.PI;
+        // Keep only the modal functions
+        function openModal() {
+            document.getElementById('addBoxModal').style.display = 'block';
         }
 
-        window.addEventListener('mousemove', onMouseMove);
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
+        function closeModal() {
+            document.getElementById('addBoxModal').style.display = 'none';
         }
-        animate();
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        function openEditModal(boxId) {
+            document.getElementById(`editBoxModal-${boxId}`).style.display = 'block';
+        }
+
+        function closeEditModal(boxId) {
+            document.getElementById(`editBoxModal-${boxId}`).style.display = 'none';
+        }
+
+        // Add the missing submitForm function
+        async function submitForm() {
+            const form = document.getElementById('addBoxForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/web/boxes', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    window.location.reload(); // Refresh the page to show the new box
+                } else {
+                    console.error('Failed to add box');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addBoxModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Add this function to handle box deletion
+        async function deleteBox(boxId) {
+            try {
+                const response = await fetch(`/web/boxes/${boxId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                    }
+                });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to delete box');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function submitEditForm(boxId) {
+            const form = document.getElementById(`editBoxForm-${boxId}`);
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch(`/web/boxes/${boxId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (response.ok) {
+                    closeEditModal(boxId);
+                    window.location.reload();
+                } else {
+                    const error = await response.json();
+                    console.error('Failed to update box:', error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
     </script>
 </body>
 

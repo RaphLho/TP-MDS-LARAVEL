@@ -14,8 +14,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     Route::get('/locations', [BoxesController::class, 'index'])->name('locations');
-    
+    Route::post('/web/boxes', [BoxesController::class, 'store'])->name('boxes.store');
+    Route::put('/web/boxes/{box}', [BoxesController::class, 'edit'])->name('boxes.edit');
     Route::post('/web/boxes/{box}/toggle-status', [BoxesController::class, 'toggleStatus'])->name('boxes.toggleStatus');
+    Route::delete('/web/boxes/{box}', [BoxesController::class, 'delete'])->name('boxes.delete');
 });
 
 require __DIR__.'/auth.php';
