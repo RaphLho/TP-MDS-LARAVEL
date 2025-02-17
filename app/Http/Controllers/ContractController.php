@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 class ContractController extends Controller
 {
     /**
-     * Store a new contract template.
+     * Store a new contract template or update existing one.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -23,13 +23,28 @@ class ContractController extends Controller
             $request->validate([
                 'name' => 'required|string',
                 'content' => 'required|string',
+                'contract_id' => 'nullable|exists:contracts,id'
             ]);
 
-            $contract = Contract::create([
-                'user_id' => Auth::id(),
-                'name' => $request->name,
-                'content' => $request->content
-            ]);
+            if ($request->contract_id) {
+                $contract = Contract::findOrFail($request->contract_id);
+                
+                // Check if user owns this contract
+                if ($contract->user_id !== Auth::id()) {
+                    throw new \Exception('Unauthorized to update this contract');
+                }
+
+                $contract->update([
+                    'name' => $request->name,
+                    'content' => json_decode($request->content, true)
+                ]);
+            } else {
+                $contract = Contract::create([
+                    'user_id' => Auth::id(),
+                    'name' => $request->name,
+                    'content' => json_decode($request->content, true)
+                ]);
+            }
 
             if (!$contract) {
                 throw new \Exception('Failed to save contract');
@@ -37,16 +52,50 @@ class ContractController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Contract template saved successfully',
+                'message' => $request->contract_id ? 'Contract template updated successfully' : 'Contract template saved successfully',
                 'contract' => $contract
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Contract creation failed: ' . $e->getMessage());
+            Log::error('Contract operation failed: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to save contract template',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a contract template.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        try {
+            $contract = Contract::findOrFail($id);
+
+            // Check if user owns this contract
+            if ($contract->user_id !== Auth::id()) {
+                throw new \Exception('Unauthorized to delete this contract');
+            }
+
+            $contract->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Contract template deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Contract deletion failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete contract template',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -73,11 +122,11 @@ class ContractController extends Controller
                          ->get();
         }
 
-        // Get existing contract template if any
-        $existingContract = Contract::where('user_id', $user->id)
-                                  ->latest()
-                                  ->first();
+        // Get all contract templates for the user
+        $contracts = Contract::select('id', 'user_id', 'name', 'content', 'created_at', 'updated_at')
+                           ->where('user_id', $user->id)
+                           ->get();
         
-        return view('contract', compact('boxes', 'existingContract'));
+        return view('contract', compact('boxes', 'contracts'));
     }
 }

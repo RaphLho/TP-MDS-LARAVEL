@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/contract', [ContractController::class, 'show'])->name('contract');
     
     Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
+    Route::delete('/contracts/{id}', [ContractController::class, 'destroy'])->name('contracts.destroy');
 });
 
 require __DIR__.'/auth.php';

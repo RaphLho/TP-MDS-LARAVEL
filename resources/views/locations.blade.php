@@ -268,8 +268,8 @@
                                     class="m-8 text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 ease-in-out hover:text-blue-800 dark:hover:text-blue-200 cursor-pointer">
                                     Modifier
                                 </button>
-                                <a href="/contrat" class="block w-full px-4 py-2 bg-green-600 text-white text-center rounded-md hover:bg-green-700 transition-colors duration-300">
-                                    Voir le contrat
+                                <a href="/contract" class="block w-full px-4 py-2 bg-green-600 text-white text-center rounded-md hover:bg-green-700 transition-colors duration-300">
+                                    Voir le contract
                                 </a>
                                 @endif
 
