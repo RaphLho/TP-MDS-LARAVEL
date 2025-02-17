@@ -238,10 +238,12 @@
                                     Prix: {{ $box->price }} €
                                 </p>
                                 @if(Auth::user()->locataire)
-                                    <button @click="toggleStatus"
-                                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 active:transform active:scale-95 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                        x-text="status === 0 ? 'Réserver' : 'Annuler la réservation'">
-                                    </button>
+                                    <div class="space-y-2">
+                                        <button @click="toggleStatus"
+                                            class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 active:transform active:scale-95 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                            x-text="status === 0 ? 'Réserver' : 'Annuler la réservation'">
+                                        </button>
+                                    </div>
                                 @else
                                 <div class="flex items-center justify-between mb-4">
                                     <span class="text-gray-900 dark:text-gray-100">Statut:</span>
@@ -266,6 +268,9 @@
                                     class="m-8 text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 ease-in-out hover:text-blue-800 dark:hover:text-blue-200 cursor-pointer">
                                     Modifier
                                 </button>
+                                <a href="/contrat" class="block w-full px-4 py-2 bg-green-600 text-white text-center rounded-md hover:bg-green-700 transition-colors duration-300">
+                                    Voir le contrat
+                                </a>
                                 @endif
 
                                 <!-- Edit Box Modal -->

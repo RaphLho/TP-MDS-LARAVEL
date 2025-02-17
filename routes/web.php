@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BoxesController;
+use App\Http\Controllers\ContractController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -20,6 +21,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/web/boxes/{box}', [BoxesController::class, 'delete'])->name('boxes.delete');
 
     Route::get('/reservations', [BoxesController::class, 'reservations'])->name('reservations');
+
+    Route::get('/contract', [ContractController::class, 'show'])->name('contract');
+    
+    Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
 });
 
 require __DIR__.'/auth.php';

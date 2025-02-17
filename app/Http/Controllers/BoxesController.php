@@ -147,4 +147,23 @@ class BoxesController extends Controller
         
         return view('locations', compact('boxes'));
     }
+
+    public function contract(): \Illuminate\Contracts\View\View
+    {
+        $user = Auth::user();
+        
+        // Get the user's rented box(es)
+        if ($user->locataire) {
+            $boxes = Boxes::where('status', 1)
+                         ->where('reserve_par', $user->email)
+                         ->get();
+        } else {
+            $boxes = Boxes::where('user_id', $user->id)
+                         ->where('status', 1)
+                         ->whereNotNull('reserve_par')
+                         ->get();
+        }
+        
+        return view('contrat', compact('boxes'));
+    }
 }
