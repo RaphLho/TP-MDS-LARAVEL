@@ -265,6 +265,8 @@
 
             // Load template when select changes
             const templateSelect = document.getElementById('templateSelect');
+            const templatePreview = document.getElementById('templatePreview');
+            const templateContent = document.getElementById('templateContent');
             const deleteButton = document.getElementById('deleteButton');
 
             if (templateSelect) {
@@ -275,9 +277,41 @@
                         editor.render(content);
                         document.getElementById('contractName').value = selectedOption.text;
                         document.getElementById('contract_id').value = this.value;
-                        deleteButton?.classList.remove('hidden');
+                        deleteButton.classList.remove('hidden');
+                        
+                        // Afficher le contenu du template
+                        templatePreview.classList.remove('hidden');
+                        templateContent.innerHTML = ''; // Clear previous content
+                        
+                        content.blocks.forEach(block => {
+                            let element;
+                            switch(block.type) {
+                                case 'header':
+                                    element = document.createElement(`h${block.data.level}`);
+                                    element.textContent = block.data.text;
+                                    break;
+                                case 'paragraph':
+                                    element = document.createElement('p');
+                                    element.textContent = block.data.text;
+                                    element.className = 'mb-4';
+                                    break;
+                                case 'list':
+                                    element = document.createElement(block.data.style === 'ordered' ? 'ol' : 'ul');
+                                    block.data.items.forEach(item => {
+                                        const li = document.createElement('li');
+                                        li.textContent = item;
+                                        element.appendChild(li);
+                                    });
+                                    break;
+                                // Add more cases for other block types as needed
+                            }
+                            if (element) {
+                                templateContent.appendChild(element);
+                            }
+                        });
                     } else {
-                        deleteButton?.classList.add('hidden');
+                        templatePreview.classList.add('hidden');
+                        deleteButton.classList.add('hidden');
                         editor.clear();
                         document.getElementById('contractName').value = '';
                         document.getElementById('contract_id').value = '';
