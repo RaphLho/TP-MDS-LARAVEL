@@ -18,6 +18,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/web/boxes/{box}', [BoxesController::class, 'edit'])->name('boxes.edit');
     Route::post('/web/boxes/{box}/toggle-status', [BoxesController::class, 'toggleStatus'])->name('boxes.toggleStatus');
     Route::delete('/web/boxes/{box}', [BoxesController::class, 'delete'])->name('boxes.delete');
+
+    Route::get('/reservations', [BoxesController::class, 'reservations'])->name('reservations');
 });
 
 require __DIR__.'/auth.php';

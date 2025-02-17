@@ -21,6 +21,7 @@ protected $fillable = [
     'address',
     'price',
     'status',
+    'reserve_par',
 ];
 
 /**

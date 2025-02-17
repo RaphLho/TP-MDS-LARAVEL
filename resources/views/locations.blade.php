@@ -91,6 +91,15 @@
                     </div>
                 </div>
                 <div class="flex items-center">
+                    @if(Auth::user()->locataire)
+                    <a href="/reservations" class="mr-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Mes réservations
+                    </a>
+                    @else
+                    <a href="/reservations" class="mr-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Mes locations
+                    </a>
+                    @endif
                     <div class="ml-3 relative" x-data="{ open: false }">
                         <div>
                             <button @click="open = !open"
@@ -158,6 +167,7 @@
     <main class="flex-grow">
         <div class="max-w-7xl mx-auto py-12 sm:px-6 lg:px-8">
             <div class="px-4 py-6 sm:px-0">
+                @if(!Auth::user()->locataire)
                 <div class="flex justify-end mb-6">
                     <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -166,9 +176,14 @@
                         Ajouter une box
                     </button>
                 </div>
+                @endif
                 <h2
                     class="text-3xl font-extrabold text-center mb-8 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-300 animate-bounce-slow">
-                    Gestion de locations de box
+                    @if(Auth::user()->locataire)
+                        Boxes disponibles à la location
+                    @else
+                        Gestion de locations de box
+                    @endif
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     @foreach ($boxes as $box)
@@ -181,17 +196,28 @@
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                'Accept': 'application/json'
                                             }
                                         });
+                                        
+                                        const data = await response.json();
+                                        
                                         if (response.ok) {
-                                            const data = await response.json();
                                             this.status = data.status;
+                                            // Show success message
+                                            alert(data.message);
                                         } else {
-                                            console.error('Failed to update status');
+                                            // Show error message
+                                            alert(data.message || 'Failed to update status');
+                                            // Reset the toggle if the action failed
+                                            this.status = {{ $box->status ? 1 : 0 }};
                                         }
                                     } catch (error) {
                                         console.error('Error:', error);
+                                        alert('An error occurred while updating the status');
+                                        // Reset the toggle if there was an error
+                                        this.status = {{ $box->status ? 1 : 0 }};
                                     }
                                 }
                             }">
@@ -211,6 +237,12 @@
                                 <p class="text-gray-900 dark:text-gray-100 mb-4">
                                     Prix: {{ $box->price }} €
                                 </p>
+                                @if(Auth::user()->locataire)
+                                    <button @click="toggleStatus"
+                                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 active:transform active:scale-95 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                        x-text="status === 0 ? 'Réserver' : 'Annuler la réservation'">
+                                    </button>
+                                @else
                                 <div class="flex items-center justify-between mb-4">
                                     <span class="text-gray-900 dark:text-gray-100">Statut:</span>
                                     <div
@@ -234,6 +266,7 @@
                                     class="m-8 text-blue-600 dark:text-blue-400 hover:underline transition-all duration-300 ease-in-out hover:text-blue-800 dark:hover:text-blue-200 cursor-pointer">
                                     Modifier
                                 </button>
+                                @endif
 
                                 <!-- Edit Box Modal -->
                                 <div id="editBoxModal-{{ $box->id }}" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden overflow-y-auto">
