@@ -26,6 +26,11 @@ class ContractController extends Controller
                 'contract_id' => 'nullable|exists:contracts,id'
             ]);
 
+            $content = json_decode($request->content, true);
+
+            // Process template variables in content
+            $content = $this->processTemplateVariables($content);
+
             if ($request->contract_id) {
                 $contract = Contract::findOrFail($request->contract_id);
                 
@@ -36,13 +41,13 @@ class ContractController extends Controller
 
                 $contract->update([
                     'name' => $request->name,
-                    'content' => json_decode($request->content, true)
+                    'content' => $content
                 ]);
             } else {
                 $contract = Contract::create([
                     'user_id' => Auth::id(),
                     'name' => $request->name,
-                    'content' => json_decode($request->content, true)
+                    'content' => $content
                 ]);
             }
 
@@ -65,6 +70,31 @@ class ContractController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Process template variables in content blocks
+     * 
+     * @param array $content
+     * @return array
+     */
+    private function processTemplateVariables($content)
+    {
+        if (isset($content['blocks'])) {
+            foreach ($content['blocks'] as &$block) {
+                if (isset($block['data']['text'])) {
+                    // Replace template variables with actual values
+                    $variables = [
+                        '[nom]' => Auth::user()->name,
+                        '[email]' => Auth::user()->email,
+                        // Add more variables as needed
+                    ];
+
+                    $block['data']['text'] = strtr($block['data']['text'], $variables);
+                }
+            }
+        }
+        return $content;
     }
 
     /**

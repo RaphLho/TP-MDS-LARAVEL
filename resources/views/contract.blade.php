@@ -108,11 +108,26 @@
 
     <div class="container mx-auto px-4 py-8">
         <div class="neo-container rounded-2xl shadow-2xl p-8">
-            <h1 class="text-4xl font-bold mb-8 text-center">
-                <span class="text-blue-600">
-                    Système de Gestion des Contrats
-                </span>
-            </h1>
+            <div class="flex justify-between items-center mb-8">
+                <a href="/locations" class="neo-button font-bold py-2 px-4 rounded-lg transform hover:scale-105 transition-all duration-300">
+                    Retour
+                </a>
+                <h1 class="text-4xl font-bold text-center">
+                    <span class="text-blue-600">
+                        Système de Gestion des Contrats
+                    </span>
+                </h1>
+                <div class="w-[88px]"></div>
+            </div>
+
+            <div class="mb-6 bg-blue-100 p-4 rounded-lg">
+                <h3 class="text-blue-600 font-bold mb-2">Variables disponibles:</h3>
+                <p class="text-blue-800">Utilisez ces variables dans votre modèle:</p>
+                <ul class="list-disc list-inside mt-2">
+                    <li>[nom] - Nom de l'utilisateur</li>
+                    <li>[email] - Email de l'utilisateur</li>
+                </ul>
+            </div>
 
             @if($contracts->count() > 0)
                 <div class="mb-6">
@@ -237,13 +252,13 @@
                         {
                             type: "paragraph",
                             data: {
-                                text: "Le propriétaire : [Nom du propriétaire]"
+                                text: "Le propriétaire : [nom]"
                             }
                         },
                         {
                             type: "paragraph",
                             data: {
-                                text: "Le locataire : [Nom du locataire]"
+                                text: "Email du propriétaire : [email]"
                             }
                         },
                         {
